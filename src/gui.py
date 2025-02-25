@@ -7,19 +7,19 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 def show_results():
     # Função que será chamada ao clicar no botão para testar a conexão
-    logging.info("Botão clicado! Tentando conexão...")  #mansagem de depuração
+    logging.info("Botão clicado! Tentando conexão...")  #mensagem de depuração
     try:
         result = connection_test() #chama a função testar_conexao e armazena o resultado
-        label_result.configure(text=result) # Atualiza o texto do label com o resultado da conexão
-        logging.info("Resultado da conexão: %s", result) #mensagm de depuração com o resultado da conexão
+        app.label_result.configure(text=result) # Atualiza o texto do label com o resultado da conexão
+        logging.info("Resultado da conexão: %s", result) #mensagem de depuração com o resultado da conexão
     except Exception as e:
-        logging.error("Erro ao tentar conexão: %s", e) #mensagem de depuraçãp em caso de erro
+      logging.error("Erro ao tentar conexão", exc_info=True) #mensagem de depuraçãp em caso de erro
 
 
 
 # Cria a janela principal da aplicação
 app = ctk.CTk()
-app.title("Gerenciador de Dispensaa") # Define o título da janela
+app.title("Gerenciador de Dispensa") # Define o título da janela
 app.geometry('800x400') # Define o tamanho da janela
 
 # Cria o frame geral "screen" que ocupa a janela inteira
@@ -44,12 +44,11 @@ testbutton = ctk.CTkButton(test_area, text="testar conexão",command=show_result
 testbutton.grid(row=0, column=0, sticky="nsw", padx=5, pady=5) # A# Posiciona o botão no canto inferior esquerdo
 
 # Cria um label para exibir o resultado da conexão
-label_result = ctk.CTkLabel(test_area, text="")
-label_result.grid(row=0, column=1, sticky="nsw", padx=5, pady=5) # Adiciona o label à janela com um espaçamento vertical
+app.label_result = ctk.CTkLabel(test_area, text="")
+app.label_result.grid(row=0, column=1, sticky="nsw", padx=5, pady=5) # Adiciona o label à janela com um espaçamento vertical
 
 # Configura o preenchimento vertical e horizontal para centralizar
 test_area.grid_rowconfigure(0, weight=1)
-testbutton.grid_configure(sticky="nsew")
 
 # Inicia o loop principal da janela, mantendo-a aberta
 app.mainloop()
