@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import logging
-from .controller import show_results, boas_vindas
+from .controller import show_results, boas_vindas, add_item_frame, remove_item_frame, edit_item_frame, show_list_frame, shop_list_frame
 from .utils import create_button
 
 # Configuração do logging para depuração
@@ -54,18 +54,18 @@ class DispensaApp(ctk.CTk):
         for i in range(5):
             option_bar.grid_columnconfigure(i, weight=1)
 
-        # Lista de botões com seu respectivo nome, ícone e cor
+        # Lista de botões com seu respectivo nome, ícone, comando e cor
         buttons = [
-            ("Adicionar Item", "assets/imagens/add.png", "green"),
-            ("Remover Item", "assets/imagens/remove.png", "red"),
-            ("Editar Item", "assets/imagens/edit.png", "blue"),
-            ("Mostrar Itens", "assets/imagens/itensList.png", "gray"),
-            ("Lista de Compras", "assets/imagens/shopList.png", "gray"),
+            ("Adicionar Item", "assets/imagens/add.png", lambda: add_item_frame(self.main_frame), "green"),
+            ("Remover Item", "assets/imagens/remove.png", lambda: remove_item_frame(self.main_frame), "red"),
+            ("Editar Item", "assets/imagens/edit.png", lambda: edit_item_frame(self.main_frame), "blue"),
+            ("Mostrar Itens", "assets/imagens/itensList.png", lambda: show_list_frame(self.main_frame), "gray"),
+            ("Lista de Compras", "assets/imagens/shopList.png", lambda: shop_list_frame(self.main_frame), "gray"),
         ]
 
         # Criando os botões dinamicamente
-        for idx, (text, img, color) in enumerate(buttons):
-            create_button(option_bar, img, text, lambda t=text: logging.info(f"{t} clicado"), color, 0, idx)
+        for idx, (text, img, cmd, color) in enumerate(buttons):
+            create_button(option_bar, img, text, cmd, color, 0, idx)
 
         return option_bar
 

@@ -16,7 +16,6 @@ def load_img(image_path, size=(50, 50)):
         return None
 
 
-
 def create_button(parent, image_path, text, command=None, fg_color="gray", row=0, column=0):
     """Cria um botão com imagem e texto."""
     img = load_img(image_path)
@@ -29,6 +28,7 @@ def create_button(parent, image_path, text, command=None, fg_color="gray", row=0
         compound="top"
     )
     
+
     if img:
         button.image = img  # Evita que a imagem seja coletada pelo garbage collector
 
