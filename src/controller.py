@@ -7,32 +7,31 @@ def test_database_connection():
     return connection_test()
 
 
-
 def show_results(label_result):
-    # Função que será chamada ao clicar no botão para testar a conexão
-    logging.info("Botão clicado! Tentando conexão...")  #mensagem de depuração
+    """Atualiza o label de resultado com o status da conexão."""
+    logging.info("Botão clicado! Tentando conexão...")
     try:
-        result = test_database_connection()  #chama a função test_database_connection()  e armazena o resultado
-        label_result.configure(text=result) # Atualiza o texto do label com o resultado da conexão
-        logging.info("Resultado da conexão: %s", result) #mensagem de depuração com o resultado da conexão
+        result = test_database_connection()
+        label_result.configure(text=result)
+        logging.info("Resultado da conexão: %s", result)
     except Exception as e:
-      logging.error("Erro ao tentar conexão", exc_info=True) #mensagem de depuraçãp em caso de erro
+        logging.error("Erro ao tentar conexão", exc_info=True)
 
 
 
 def boas_vindas(frame):
-    # Frame para os rótulos de boas-vindas
+    """Cria a tela de boas-vindas."""
     welcome_frame = ctk.CTkFrame(frame, fg_color="white")
 
-    # Função para renderizar a mensagem de boas-vindas
-    label_line1 = ctk.CTkLabel(welcome_frame, text="Seja bem-vindo ao app", font=("Helvetica", 16))
-    label_line1.pack(pady=(20, 0))
+    labels = [
+        ("Seja bem-vindo ao app", 16),
+        ("Gerenciador de Dispensa", 22, "bold"),
+        ("Selecione a opção que deseja utilizar", 16)
+    ]
 
-    label_line2= ctk.CTkLabel(welcome_frame, text="Gerenciador de Dispensa", font=("Helvetica", 22, "bold"))
-    label_line2.pack(pady=(10, 0))
-
-    label_line3 = ctk.CTkLabel(welcome_frame, text="Selecione a opção que deseja utilizar", font=("Helvetica", 16))
-    label_line3.pack(pady=(10, 20))
+    for idx, (text, size, *style) in enumerate(labels):
+        label = ctk.CTkLabel(welcome_frame, text=text, font=("Helvetica", size, *style))
+        label.pack(pady=(20 if idx == 0 else 10, 0))
 
     welcome_frame.pack(expand=True)
     return welcome_frame

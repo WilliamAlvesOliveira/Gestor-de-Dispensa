@@ -1,82 +1,111 @@
-import customtkinter as ctk #importa a biblioteca tkinter abreviando "ctk"
-from .controller import show_results, boas_vindas
-from.utils import create_button
+import customtkinter as ctk
 import logging
+from .controller import show_results, boas_vindas
+from .utils import create_button
 
-# Configura o logging
+# Configuração do logging para depuração
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Cria a janela principal da aplicação
-app = ctk.CTk()
-app.title("Gerenciador de Dispensa") # Define o título da janela
-app.geometry('800x400') # Define o tamanho da janela
+class DispensaApp(ctk.CTk):
+    def __init__(self):
+        """Inicializa a janela principal do aplicativo"""
+        super().__init__()
 
-# Cria o frame geral "screen" que ocupa a janela inteira
-screen = ctk.CTkFrame(app)
-screen.pack(fill="both", expand=True, padx=10, pady=0)
+        self.title("Gerenciador de Dispensa")  # Define o título da janela
+        self.geometry('800x400')  # Define o tamanho da janela
 
-# Configura o layout do frame "screen" com 1 coluna e 2 linhas
-screen.grid_rowconfigure(0,weight=5) #primeira linha com 10% da altura
-screen.grid_rowconfigure(1, weight=93) #segunda linha ocupa 88% da altura
-screen.grid_rowconfigure(2, weight=2) #terceira linha ocupa 2% da altura
-screen.grid_columnconfigure(0, weight=1)
+        # Criar estrutura da interface
+        self.create_widgets()
 
-# Frame para os botoes
-option_bar = ctk.CTkFrame(screen) #cria a seção main
-option_bar.grid(row=0, column=0, sticky="nsew") #sticky faz o preenchimento "nsew=nort south east west"
 
-#configuração grid do frame main screen
-option_bar.grid_rowconfigure(0, weight=1) #primeira linha
-option_bar.grid_columnconfigure(0, weight=1)
-option_bar.grid_columnconfigure(1, weight=1)
-option_bar.grid_columnconfigure(2, weight=1)
-option_bar.grid_columnconfigure(3, weight=1)
-option_bar.grid_columnconfigure(4, weight=1)
+    def create_widgets(self):
+        """Cria e organiza os elementos visuais da interface"""
 
-#botão adicionar itens
-create_button(option_bar, "assets/imagens/add.png", "Adicionar Item", "", "green", 0, 0)
+        # Frame principal que conterá todos os outros elementos
+        screen = ctk.CTkFrame(self)
+        screen.pack(fill="both", expand=True, padx=10, pady=0)
 
-#botão remover itens
-create_button(option_bar, "assets/imagens/remove.png", "Remover Item", "", "red", 0, 1)
+        # Configuração do layout com grid
+        screen.grid_rowconfigure(0, weight=5)  # Barra de opções (botões superiores)
+        screen.grid_rowconfigure(1, weight=93) # Área de trabalho principal
+        screen.grid_rowconfigure(2, weight=2)  # Área inferior (testes de conexão)
+        screen.grid_columnconfigure(0, weight=1)
 
-#bbotão editar item
-create_button(option_bar, "assets/imagens/edit.png", "Editar Item", "", "blue", 0, 2)
+        # Criar barra de opções (menu superior)
+        option_bar = self.create_option_bar(screen)
+        option_bar.grid(row=0, column=0, sticky="nsew")
 
-#botão mostrar items
-create_button(option_bar, "assets/imagens/itensList.png", "Mostrar Itens", "", "gray", 0, 3)
+        # Criar o frame principal onde o conteúdo será exibido
+        self.main_frame = self.create_main_frame(screen)
+        self.main_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
-#botão lista de compras
-create_button(option_bar, "assets/imagens/shopList.png", "Lista de Compras", "", "gray", 0, 4 )
+        # Exibir mensagem de boas-vindas
+        boas_vindas(self.main_frame)
 
-#Frame principal main_frame
-main_frame = ctk.CTkFrame(screen, border_width=3, corner_radius=10, fg_color="white") #main frame criado dentro do frame screen
-main_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        # Criar área de teste de conexão
+        test_area = self.create_test_area(screen)
+        test_area.grid(row=2, column=0, sticky="nsew")
 
-# Ajustar o frame principal para expandir com a tela
-main_frame.grid_rowconfigure(0, weight=1)
-main_frame.grid_columnconfigure(0, weight=1)
 
-#renderização da tela principal
-main_label = boas_vindas(main_frame)
+    def create_option_bar(self, parent):
+        """Cria a barra superior com os botões de navegação"""
+        option_bar = ctk.CTkFrame(parent)
 
-# Frame inferior para a linha divisória e o botão de teste de conexão (segunda linha)
-test_area = ctk.CTkFrame(screen) #cria a area de teste
-test_area.grid(row=2, column=0, sticky="nsew") #define a posição dela na tela "screen0"
+        for i in range(5):
+            option_bar.grid_columnconfigure(i, weight=1)
 
-#configuralção da area de teste
-test_area.grid_columnconfigure(0, weight=0) #primeira coluna
-test_area.grid_columnconfigure(1,weight=1) #segunda coluna
+        # Lista de botões com seu respectivo nome, ícone e cor
+        buttons = [
+            ("Adicionar Item", "assets/imagens/add.png", "green"),
+            ("Remover Item", "assets/imagens/remove.png", "red"),
+            ("Editar Item", "assets/imagens/edit.png", "blue"),
+            ("Mostrar Itens", "assets/imagens/itensList.png", "gray"),
+            ("Lista de Compras", "assets/imagens/shopList.png", "gray"),
+        ]
 
-# Cria um botão para testar a conexão ao banco de dados
-testbutton = ctk.CTkButton(test_area, text="testar conexão",command=lambda:show_results(app.label_result))
-testbutton.grid(row=0, column=0, sticky="nsw", padx=5, pady=5) # A# Posiciona o botão no canto inferior esquerdo
+        # Criando os botões dinamicamente
+        for idx, (text, img, color) in enumerate(buttons):
+            create_button(option_bar, img, text, lambda t=text: logging.info(f"{t} clicado"), color, 0, idx)
 
-# Cria um label para exibir o resultado da conexão
-app.label_result = ctk.CTkLabel(test_area, text="")
-app.label_result.grid(row=0, column=1, sticky="nsw", padx=5, pady=5) # Adiciona o label à janela com um espaçamento vertical
+        return option_bar
 
-# Configura o preenchimento vertical e horizontal para centralizar
-test_area.grid_rowconfigure(0, weight=1)
 
-# Inicia o loop principal da janela, mantendo-a aberta
-app.mainloop()
+    
+    def create_main_frame(self, parent):
+        """Cria o frame principal onde o conteúdo da aplicação será exibido"""
+        main_frame = ctk.CTkFrame(parent, border_width=3, corner_radius=10, fg_color="white")
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+
+        return main_frame
+
+
+    def create_test_area(self, parent):
+        """Cria a área inferior onde será testada a conexão com o banco de dados"""
+        test_area = ctk.CTkFrame(parent)
+
+        test_area.grid_columnconfigure(0, weight=0) # Coluna do botão
+        test_area.grid_columnconfigure(1, weight=1) # Coluna do resultado
+
+        # Label que mostrará o resultado do teste
+        self.label_result = ctk.CTkLabel(test_area, text="")
+        self.label_result.grid(row=0, column=1, sticky="nsw", padx=5, pady=5)
+
+        # Botão para testar a conexão
+        test_button = ctk.CTkButton(test_area, text="Testar Conexão", command=self.test_connection)
+        test_button.grid(row=0, column=0, sticky="nsw", padx=5, pady=5)
+
+        return test_area
+
+
+    def test_connection(self):
+        """Executa a função que testa a conexão com o banco de dados e exibe o resultado"""
+        show_results(self.label_result)
+
+
+# Executa o aplicativo se o arquivo for rodado diretamente
+if __name__ == "__main__":
+    app = DispensaApp()
+    app.mainloop()
+
+__all__ = ["app"]
