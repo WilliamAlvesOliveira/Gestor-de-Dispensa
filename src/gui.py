@@ -1,22 +1,10 @@
 import customtkinter as ctk #importa a biblioteca tkinter abreviando "ctk"
-from .controller import test_database_connection, boas_vindas
-from.utils import load_img, create_button
+from .controller import show_results, boas_vindas
+from.utils import create_button
 import logging
 
 # Configura o logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-def show_results():
-    # Função que será chamada ao clicar no botão para testar a conexão
-    logging.info("Botão clicado! Tentando conexão...")  #mensagem de depuração
-    try:
-        result = test_database_connection()  #chama a função test_database_connection()  e armazena o resultado
-        app.label_result.configure(text=result) # Atualiza o texto do label com o resultado da conexão
-        logging.info("Resultado da conexão: %s", result) #mensagem de depuração com o resultado da conexão
-    except Exception as e:
-      logging.error("Erro ao tentar conexão", exc_info=True) #mensagem de depuraçãp em caso de erro
-
-
 
 # Cria a janela principal da aplicação
 app = ctk.CTk()
@@ -80,7 +68,7 @@ test_area.grid_columnconfigure(0, weight=0) #primeira coluna
 test_area.grid_columnconfigure(1,weight=1) #segunda coluna
 
 # Cria um botão para testar a conexão ao banco de dados
-testbutton = ctk.CTkButton(test_area, text="testar conexão",command=show_results)
+testbutton = ctk.CTkButton(test_area, text="testar conexão",command=lambda:show_results(app.label_result))
 testbutton.grid(row=0, column=0, sticky="nsw", padx=5, pady=5) # A# Posiciona o botão no canto inferior esquerdo
 
 # Cria um label para exibir o resultado da conexão
