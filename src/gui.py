@@ -1,5 +1,5 @@
 import customtkinter as ctk #importa a biblioteca tkinter abreviando "ctk"
-from .controller import test_database_connection
+from .controller import test_database_connection, boas_vindas
 from.utils import load_img, create_button
 import logging
 
@@ -60,6 +60,16 @@ create_button(option_bar, "assets/imagens/itensList.png", "Mostrar Itens", "", "
 #botão lista de compras
 create_button(option_bar, "assets/imagens/shopList.png", "Lista de Compras", "", "gray", 0, 4 )
 
+#Frame principal main_frame
+main_frame = ctk.CTkFrame(screen, border_width=3, corner_radius=10, fg_color="white") #main frame criado dentro do frame screen
+main_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+
+# Ajustar o frame principal para expandir com a tela
+main_frame.grid_rowconfigure(0, weight=1)
+main_frame.grid_columnconfigure(0, weight=1)
+
+#renderização da tela principal
+main_label = boas_vindas(main_frame)
 
 # Frame inferior para a linha divisória e o botão de teste de conexão (segunda linha)
 test_area = ctk.CTkFrame(screen) #cria a area de teste

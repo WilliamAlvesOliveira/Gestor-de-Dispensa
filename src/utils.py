@@ -16,6 +16,8 @@ def load_img(image_path, size=(50,50)):
         logging.error(f"Erro ao carregar imagem '{image_path}': {e}")
         return None  # Retorna None se houver erro
 
+
+
 def create_button(parent, image_path, text, command, fg_color, row, column):
     """
     Função para criar e adicionar um botão a um container pai.
@@ -36,3 +38,6 @@ def create_button(parent, image_path, text, command, fg_color, row, column):
         button.image = img  # Mantém uma referência para evitar problemas de exibição
         
     button.grid(row=row, column=column, sticky="nsew")
+
+
+    

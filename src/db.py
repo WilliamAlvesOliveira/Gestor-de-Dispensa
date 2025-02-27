@@ -24,3 +24,4 @@ def connection_test():
         if db and db.is_connected():
             db.close()  # Fecha a conexão apenas se estiver ativa
 
+
