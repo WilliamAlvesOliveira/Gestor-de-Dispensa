@@ -1,27 +1,58 @@
-import mysql.connector #Importa o módulo mysql.connector para conectar ao banco de dados MySQL
-from mysql.connector import Error ## Importa a classe Error para tratar exceções relacionadas ao MySQL
+import logging
+import mysql.connector
+from mysql.connector import Error
 
-def connection_test():
-    # Tenta estabelecer uma conexão com o banco de dados MySQL usando os parâmetros fornecidos
-    db = None #inicia a variavel db
+# Função genérica para conectar ao banco de dados
+def connect_db():
+    """Cria e retorna uma conexão com o banco de dados"""
     try:
         db = mysql.connector.connect(
-            host = "localhost",
-            user = "root",
-            password = "",
-            database = "dispensa"
+            host="localhost",
+            user="root",
+            password="",
+            database="dispensa"
         )
+        return db
+    except Error as err:
+        logging.error(f"❌ Erro ao conectar ao banco de dados: {err}")
+        return None  # Retorna None em caso de falha na conexão
 
-        if db.is_connected(): #verifica se a conexão foi bem-sucedida
-            return "✅ Conexão bem-sucedida com o banco de dados 'dispensa'."
-        
-        return "⚠️ A conexão falhou por um motivo desconhecido."
-        
-    except Error as err: #captura qualquer exceção gerada durante o processo de conexão
-        return f"❌ Erro ao conectar ao banco de dados: {err}" #retorna a mensagem com o erro
+
+# Função para testar a conexão com o banco
+def connection_test():
+    """Testa a conexão com o banco de dados"""
+    try:
+        db = connect_db()
+        if db:
+            db.close()
+            logging.info("✅ Conexão bem-sucedida com o banco de dados 'dispensa'.")
+            return True
+        else:
+            return False
+    except Exception as e:
+        logging.exception(f"❌ Exceção durante a tentativa de conexão ao banco de dados: {e}")
+        return
     
+
+# Função para buscar itens da tabela 'produtos'
+def get_items_from_db():
+    """Busca os itens do banco de dados e retorna uma lista de dicionários"""
+    db = connect_db()
+    if not db:  # Se a conexão falhou, retorna lista vazia
+        return "❌ Infelizmente não conseguimos acessar os dados.\nClique em 'Testar Conexão' para verificar a conexão com o banco de dados."
+
+    try:
+        logging.info("✅ Conexão bem-sucedida com o banco de dados 'dispensa'.")
+        cursor = db.cursor(dictionary=True)  # Retorna resultados como dicionário
+        cursor.execute('SELECT nome, quantidade, target FROM produtos')
+        items = cursor.fetchall()
+        cursor.close()
+        return items  # Retorna diretamente a lista de dicionários
+
+    except Error as err:
+        logging.error(f"❌ Erro ao buscar itens do banco de dados: {err}")
+        return []
+
     finally:
-        if db and db.is_connected():
-            db.close()  # Fecha a conexão apenas se estiver ativa
-
-
+        if db.is_connected():
+            db.close()  # Fecha a conexão
