@@ -17,7 +17,6 @@ def connect_db():
         logging.error(f"❌ Erro ao conectar ao banco de dados: {err}")
         return None  # Retorna None em caso de falha na conexão
 
-
 # Função para testar a conexão com o banco
 def connection_test():
     """Testa a conexão com o banco de dados"""
@@ -31,14 +30,13 @@ def connection_test():
             return False
     except Exception as e:
         logging.exception(f"❌ Exceção durante a tentativa de conexão ao banco de dados: {e}")
-        return
-    
+        return False
 
 # Função para buscar itens da tabela 'produtos'
 def get_items_from_db():
     """Busca os itens do banco de dados e retorna uma lista de dicionários"""
     db = connect_db()
-    if not db:  # Se a conexão falhou, retorna lista vazia
+    if not db:  # Se a conexão falhou, retorna mensagem de erro
         return "❌ Infelizmente não conseguimos acessar os dados.\nClique em 'Testar Conexão' para verificar a conexão com o banco de dados."
 
     try:
@@ -47,11 +45,15 @@ def get_items_from_db():
         cursor.execute('SELECT nome, quantidade, target FROM produtos')
         items = cursor.fetchall()
         cursor.close()
-        return items  # Retorna diretamente a lista de dicionários
+
+        if items is None:  # Garante que sempre retorna uma lista
+            return []
+
+        return items  
 
     except Error as err:
         logging.error(f"❌ Erro ao buscar itens do banco de dados: {err}")
-        return []
+        return "❌ Erro ao buscar itens no banco de dados. Tente novamente mais tarde."
 
     finally:
         if db.is_connected():
