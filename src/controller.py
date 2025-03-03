@@ -1,5 +1,5 @@
 from .db import connection_test, get_items_from_db
-from .utils import create_scrollable_frame, create_form, create_button
+from .utils import create_scrollable_frame, create_form, update_message
 import customtkinter as ctk
 import logging
 
@@ -51,33 +51,35 @@ def add_item_frame(frame):
     # Configura o grid do frame rolável para expandir e preencher o espaço disponível
     scrollable_frame.grid_columnconfigure(0, weight=1)
 
-    label = ctk.CTkLabel(scrollable_frame, text="Adicionar Item", font=("Times", 22,"bold"), anchor="n")
+    label = ctk.CTkLabel(scrollable_frame, text="Adicionar Item", font=("Times", 22, "bold"), anchor="n")
     label.pack(fill="x", padx=5, pady=5)
 
     # Lista de elementos do formulário
     form = [
-        #tipo do elemento,nome do label, texto para as labels
-        #tipo do input, nome do label, placeholder 
-        #tipo radio, nome do label, textos de cada botão
         ("label", "Nome do Produto *"),
-        ("input", "Nome do Produto","Digite o nome do Produto"),
-        ("label", "Quantidade"),
-        ("input", "Quantidade","0"),
-        ("label", "Quantidade de Referência"),
-        ("input", "Quantidade de Referência","Digite a quantidade a ser mantida"),
-        ("label", "Essencial?"),
-        ("radio", "essencial", "Sim", "Não"),
+        ("input", "Nome do Produto", "Digite o nome do Produto"),
+        ("label", "Quantidade*"),
+        ("input", "Quantidade", "0"),
+        ("label", "Quantidade de Referência*"),
+        ("input", "Quantidade de Referência", "Digite a quantidade a ser mantida"),
+        ("label", "Essencial"),
+        ("radio", "Essencial", "Sim", "Não"),
         ("label", "Período de Compra"),
-        ("radio", "periodo de Compra", "Mensal", "Quinzenal", "Semanal"),
+        ("radio", "Periodo de Compra", "Mensal", "Quinzenal", "Semanal"),
     ]
 
     # Cria os elementos do formulário dinamicamente
-    create_form(scrollable_frame, form)
+    entries = create_form(scrollable_frame, form)
 
-    button = ctk.CTkButton( scrollable_frame,  text="Adicionar Item", command= lambda : logging.info("clicado"), fg_color="green")
-    button.pack( padx=6, pady=5, anchor="n")
+    # Botão para adicionar item
+    button = ctk.CTkButton(scrollable_frame, text="Adicionar Item", command=lambda: update_message(entries, message_label, form), fg_color="green")
+    button.pack(padx=6, pady=5, anchor="n")
 
+    # Criação da mensagem de erro ou sucesso
+    message_label = ctk.CTkLabel(scrollable_frame, text="", font=("Ari", 18), anchor="n")
+    message_label.pack(fill="x", padx=5, pady=5)
     return scrollable_frame
+
 
 
 def remove_item_frame(frame):

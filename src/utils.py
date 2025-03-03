@@ -1,6 +1,7 @@
 from PIL import Image
 import customtkinter as ctk
 import logging
+from .db import add_item_to_db
 
 # Configuração do logging
 logging.basicConfig(level=logging.DEBUG)
@@ -70,6 +71,7 @@ def create_scrollable_frame(parent):
 
 def create_form(parent, form):
     """Cria os elementos do formulário dinamicamente"""
+    entries = {}
     variables = {}
 
     def add_placeholder(entry, placeholder):
@@ -101,6 +103,7 @@ def create_form(parent, form):
             entry.pack(padx=2, pady=2, anchor="n")
             if placeholder:
                 add_placeholder(entry, placeholder)
+            entries[text] = entry
         elif element_type == "radio":
             variable_name = text  
             if variable_name not in variables:
@@ -113,3 +116,86 @@ def create_form(parent, form):
                 radio_text = item[i]
                 radio_button = ctk.CTkRadioButton(radio_frame, text=radio_text, variable=variables[variable_name], value=radio_text)
                 radio_button.pack(side="left", padx=3, pady=3)  # lado a lado
+            entries[text] = variables[variable_name]
+
+    return entries
+        
+def validate_values(entries):
+    """Valida os valores dos campos de entrada."""
+    nome = entries["Nome do Produto"].get().strip()
+    quantidade = entries["Quantidade"].get().strip()
+    quantidade_referencia = entries["Quantidade de Referência"].get().strip()
+    if quantidade_referencia == '0' or quantidade_referencia =="Digite a quantidade a ser mantida":
+        quantidade_referencia = '1'
+    essencial = entries["Essencial"].get()
+    essencial = True if essencial == "Sim" else False
+    periodo = entries["Periodo de Compra"].get()
+
+    if not nome or nome == "Digite o nome do Produto":
+        logging.error("Preencha o nome do produto!")
+        return {"status": False, "mensagem": "Preencha o Nome do Produto!"}
+
+    if not quantidade.isdigit() or int(quantidade) < 0:
+        logging.error("Quantidade deve ser maior ou igual a 0!")
+        return {"status": False, "mensagem": "Quantidade deve ser maior ou igual a 0!"}
+    else:
+        quantidade = int(quantidade)
+
+    if not quantidade_referencia.isdigit():
+        logging.error("Preencha o campo Quantidade de Referência!")
+        return {"status": False, "mensagem": "Preencha o campo Quantidade de Referência!"}
+    else:
+        quantidade_referencia = int(quantidade_referencia)
+    
+
+    logging.info(f"""Nome: {nome, nome, type(nome)},
+                  Quantidade: {quantidade, type(quantidade)},
+                  Quantidade de Referência: {quantidade_referencia, type(quantidade_referencia)}, 
+                  Essencial: {essencial, type(essencial)}, 
+                  Período de Compra: {periodo, type(periodo)}""")
+    
+    values = {
+        "nome": nome,
+        "quantidade": quantidade,
+        "quantidade_referencia": quantidade_referencia,
+        "essencial": essencial,
+        "periodo": periodo
+    }
+
+    add_result= add_item_to_db(values)
+
+    if add_result["status"]:
+        return {"status": True, "mensagem": f"O Produto '{nome}' foi adicionado com sucesso!"}
+    else:
+        return {"status": False, "mensagem": f"Erro ao adicionar o Produto '{nome}': {add_result['mensagem']}"}
+    
+
+def update_message(entries, message_label, form):
+    """Atualiza a mensagem na interface e adiciona ao banco se os valores forem válidos."""
+    resultado = validate_values(entries)  # Captura o resultado da validação
+
+    print(resultado)  # Para ver o resultado da validação no terminal/log
+
+    if not resultado['status']:
+        message_label.configure(text= resultado["mensagem"], text_color="red")  # Exibe o erro na interface
+    else:
+        message_label.configure(text= resultado["mensagem"], text_color="green")  # Confirmação ao usuário
+        clear_form(entries, form)  # Limpa os campos do formulário mantendo os placeholders
+
+
+def clear_form(entries, form):
+    """Limpa os campos do formulário mantendo os placeholders"""
+    for item in form:
+        element_type = item[0]
+        text = item[1]
+
+        if element_type == "input" and text in entries:
+            placeholder = item[2] if len(item) > 2 else ""
+            entry = entries[text]
+            entry.delete(0, 'end')
+            if placeholder:
+                entry.insert(0, placeholder)
+        elif element_type == "radio" and text in entries:
+            default_value = item[2]  # O primeiro valor do rádio é o valor padrão
+            entries[text].set(default_value)
+

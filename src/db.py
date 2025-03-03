@@ -58,3 +58,49 @@ def get_items_from_db():
     finally:
         if db.is_connected():
             db.close()  # Fecha a conexão
+
+
+# função para adicionar itens ao banco de dados
+def add_item_to_db(values):
+    """Adiciona um item ao banco de dados."""
+    if not connection_test():
+        return {"status": False, "mensagem": "Falha na conexão com o banco de dados."}
+
+    nome = values["nome"]
+    quantidade = values["quantidade"]
+    quantidade_referencia = values["quantidade_referencia"]
+    essencial = values["essencial"]
+    periodo = values["periodo"]
+
+    try:
+        db = connect_db()
+        if not db:
+            return {"status": False, "mensagem": "Falha ao conectar ao banco de dados para inserção."}
+        
+        cursor = db.cursor()
+
+        # Verifica se o produto já existe
+        cursor.execute("SELECT COUNT(*) FROM produtos WHERE nome = %s", (nome,))
+        if cursor.fetchone()[0] > 0:
+            logging.warning(f"O Produto '{nome}' já existe no banco de dados.")
+            return {"status": False, "mensagem": f"O Produto '{nome}' já existe!"}
+
+        # Exemplo de comando SQL para adicionar um item
+        sql_query = """
+        INSERT INTO produtos (nome, quantidade, target, essencial, periodo_de_compra)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql_query, (nome, quantidade, quantidade_referencia, essencial, periodo))
+
+        db.commit()  # Confirma a transação
+        logging.info(f"O Produto '{nome}' foi adicionado ao banco de dados com sucesso!")
+        
+        cursor.close()
+        db.close()
+        
+        return {"status": True, "mensagem": f"O Produto '{nome}' foi adicionado ao banco de dados com sucesso!"}
+
+    except Error as e:
+        logging.error(f"Erro ao adicionar o Produto '{nome}' ao banco de dados: {e}")
+        return {"status": False, "mensagem": f"Erro ao adicionar o Produto '{nome}' ao banco de dados: {e}"}
+
