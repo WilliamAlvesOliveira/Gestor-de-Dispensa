@@ -1,5 +1,5 @@
 from .db import connection_test, get_items_from_db
-from .utils import create_scrollable_frame, create_form, update_message
+from .utils import create_label,  create_scrollable_frame, create_form, update_message
 import customtkinter as ctk
 import logging
 
@@ -8,107 +8,94 @@ import logging
 def show_results(label_result):
     """Atualiza o label de resultado com o status da conexão."""
     try:
-        logging.info("Botão clicado! Tentando conexão...")
+        logging.info("Testando conexão com o banco de dados...")
         result = connection_test()
-        if result:
-            label_result.configure(text="✅ Conexão bem-sucedida com o banco de dados 'dispensa'.", text_color="green")
-        else:
-            label_result.configure(text="❌ Erro ao conectar ao banco de dados.", text_color="red")
+        message = "✅ Conexão bem-sucedida com o banco de dados 'dispensa'." if result else "❌ Erro ao conectar ao banco de dados."
+        label_result.configure(text=message, text_color="green" if result else "red")
     except Exception as e:
+        logging.error(f"Erro ao conectar: {e}")
         label_result.configure(text="❌ Exceção ao tentar conectar ao banco de dados.", text_color="red")
+
+
+def clear_frame(frame):
+    """Remove todos os widgets do frame."""
+    for widget in frame.winfo_children():
+        widget.destroy()
 
 
 def boas_vindas(frame):
     """Cria a tela de boas-vindas."""
     welcome_frame = ctk.CTkFrame(frame, fg_color="white")
-
     labels = [
         ("Seja bem-vindo ao app", 16),
         ("Gerenciador de Dispensa", 26, "bold"),
         ("Selecione a opção que deseja utilizar", 16)
     ]
-
-    for idx, (text, size, *style) in enumerate(labels):
-        label = ctk.CTkLabel(welcome_frame, text=text, font=("Helvetica", size, *style))
-        label.pack(pady=(20 if idx == 0 else 10, 0))
-
+    for text, size, *style in labels:
+        create_label(welcome_frame, text, size, *style).pack(pady=10)
     welcome_frame.pack(expand=True)
     return welcome_frame
 
 
 def add_item_frame(frame):
-    """Cria o frame para adicionar itens com barra de rolagem"""
-
-    logging.info("Botão Adicionar Item clicado!")
-
-    # Limpa o frame
-    for widget in frame.winfo_children():
-        widget.destroy()
-
-    # Cria o frame rolável usando a função reutilizável
+    """Cria o frame para adicionar itens com barra de rolagem."""
+    logging.info("Acessando tela de adição de itens...")
+    clear_frame(frame)
     scrollable_frame = create_scrollable_frame(frame)
-
-    # Configura o grid do frame rolável para expandir e preencher o espaço disponível
     scrollable_frame.grid_columnconfigure(0, weight=1)
 
-    label = ctk.CTkLabel(scrollable_frame, text="Adicionar Item", font=("Times", 22, "bold"), anchor="n")
-    label.pack(fill="x", padx=5, pady=5)
+    # Título do frame
+    create_label(scrollable_frame, "Adicionar Item", 22, "bold").pack(fill="x", padx=5, pady=5)
 
-    # Lista de elementos do formulário
+    # Formulário de adição de itens
     form = [
         ("label", "Nome do Produto *"),
         ("input", "Nome do Produto", "Digite o nome do Produto"),
-        ("label", "Quantidade*"),
+        ("label", "Quantidade *"),
         ("input", "Quantidade", "0"),
-        ("label", "Quantidade de Referência*"),
+        ("label", "Quantidade de Referência *"),
         ("input", "Quantidade de Referência", "Digite a quantidade a ser mantida"),
         ("label", "Essencial"),
         ("radio", "Essencial", "Sim", "Não"),
         ("label", "Período de Compra"),
         ("radio", "Periodo de Compra", "Mensal", "Quinzenal", "Semanal"),
     ]
-
-    # Cria os elementos do formulário dinamicamente
     entries = create_form(scrollable_frame, form)
 
-    # Botão para adicionar item
-    button = ctk.CTkButton(scrollable_frame, text="Adicionar Item", command=lambda: update_message(entries, message_label, form), fg_color="green")
-    button.pack(padx=6, pady=5, anchor="n")
-
-    # Criação da mensagem de erro ou sucesso
-    message_label = ctk.CTkLabel(scrollable_frame, text="", font=("Ari", 18), anchor="n")
+    # Mensagem de feedback
+    message_label = ctk.CTkLabel(scrollable_frame, text="", font=("Arial", 18))
     message_label.pack(fill="x", padx=5, pady=5)
-    return scrollable_frame
 
+    # Botão de adicionar item
+    ctk.CTkButton(
+        scrollable_frame,
+        text="Adicionar Item",
+        command=lambda: update_message(entries, message_label, form),
+        fg_color="green"
+    ).pack(padx=6, pady=5)
+
+    return scrollable_frame
 
 
 def remove_item_frame(frame):
-
-    logging.info("Botão: Remover Item foi clicado!")
-
-    for widget in frame.winfo_children():
-        widget.destroy() # remove todos os widgets
-
+    """Cria o frame para remover itens."""
+    logging.info("Acessando tela de remoção de itens...")
+    clear_frame(frame)
     scrollable_frame = create_scrollable_frame(frame)
     scrollable_frame.grid_columnconfigure(0, weight=1)
 
-    label = ctk.CTkLabel(scrollable_frame, text="Remover Item", font=("Times", 22,"bold"), anchor="n")
-    label.pack(fill="x", padx=5, pady=5)
+    # Título do frame
+    create_label(scrollable_frame, "Remover Item", 22, "bold").pack(fill="x", padx=5, pady=5)
 
-    # Lista de elementos do formulário
-    form = [
+    # Formulário de remoção de itens
+    create_form(scrollable_frame, [
         ("label", "Nome do produto que você deseja excluir:"),
-        ("input", "Nome do produto que você deseja excluir:","Nome do produto")
-    ]
-
-    # Cria os elementos do formulário dinamicamente
-    create_form(scrollable_frame, form)
+        ("input", "Nome do produto", "Nome do produto")
+    ])
 
     return scrollable_frame
 
-
 def edit_item_frame(frame):
-
     logging.info("Botão: Editar Item foi clicado!")
 
     for widget in frame.winfo_children():
@@ -124,68 +111,40 @@ def edit_item_frame(frame):
 
 
 def show_list_frame(frame):
-    logging.info("Botão: Itens da Dispensa foi clicado!, tentando conexão com o banco de dados...")
-
-    # Limpa o frame antes de exibir os novos itens
-    for widget in frame.winfo_children():
-        widget.destroy()
-
+    """Exibe os itens cadastrados."""
+    logging.info("Acessando tela de listagem de itens...")
+    clear_frame(frame)
     scrollable_frame = create_scrollable_frame(frame)
     scrollable_frame.grid_columnconfigure(0, weight=1)
 
-    label = ctk.CTkLabel(scrollable_frame, text="Itens da Dispensa", font=("Times", 24, "underline", "bold"), anchor="n")
-    label.pack(fill="x", padx=20, pady=20)
+    # Título do frame
+    create_label(scrollable_frame, "Itens da Dispensa", 24, "underline", "bold").pack(fill="x", padx=20, pady=20)
 
+    # Busca os itens no banco de dados
     items = get_items_from_db()
 
-    if isinstance(items, str):  # Se houver uma mensagem de erro, mostra a mensagem de erro
-        error_label = ctk.CTkLabel(
-            scrollable_frame,
-            text=items,
-            font=("Arial", 24, "bold"),
-            text_color="red",  # Define a cor do texto como vermelho
-            anchor="center",
-            wraplength=400  # Limita a largura do texto para melhor exibição
-        )
-        error_label.pack(pady=20)
+    # Verifica se há itens
+    if isinstance(items, str) or not items:
+        error_message = items if isinstance(items, str) else "Não há itens na sua dispensa!"
+        create_label(scrollable_frame, error_message, 24, "bold").pack(pady=20)
         return scrollable_frame
 
-    if not items:  # Se a lista estiver vazia
-        error_label = ctk.CTkLabel(
-            scrollable_frame,
-            text="Não há items na sua dispensa!",
-            font=("Arial", 24, "bold"),
-            text_color="red",
-            anchor="center",
-            wraplength=400 
-        )
-        error_label.pack(pady=20)
-        return scrollable_frame
-
-    # Se houver itens, exibe a lista normalmente
+    # Exibe os itens
     for item in items:
-        item_name = item["nome"]
-        item_quantity = item["quantidade"]
-        item_target = item["target"]
-
-        # Define a cor da quantidade
-        quantity_color = "red" if item_quantity < item_target else "green"
-
-        # Criação do frame para cada item
         item_frame = ctk.CTkFrame(scrollable_frame, width=400, height=50)
         item_frame.pack(padx=10, pady=5, anchor="center")
-        item_frame.pack_propagate(False) #impede que o frame se ajuste ao conteúdo mantendo o tamanho estabelecido: 400px
+        item_frame.pack_propagate(False)
 
-        # Nome do item
-        item_label = ctk.CTkLabel(item_frame, text=item_name, font=("arial",20), anchor="w")
-        item_label.pack(side="left", padx=10, pady=5)
+        # Nome do produto
+        create_label(item_frame, item["nome"], 20).pack(side="left", padx=10, pady=5)
 
-        # Quantidade do item
-        quantity_label = ctk.CTkLabel(item_frame, text=str(item_quantity), font=("arial",20), anchor="e")
+        # Quantidade do produto
+        quantity_label = create_label(item_frame, str(item["quantidade"]), 20)
+        quantity_label.configure(text_color="red" if item["quantidade"] < item["target"] else "green")
         quantity_label.pack(side="right", padx=10, pady=5)
-        quantity_label.configure(text_color=quantity_color)
 
     return scrollable_frame
+
 
 
 def shop_list_frame(frame):
