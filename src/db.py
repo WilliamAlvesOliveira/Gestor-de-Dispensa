@@ -2,105 +2,78 @@ import logging
 import mysql.connector
 from mysql.connector import Error
 
-# Função genérica para conectar ao banco de dados
 def connect_db():
-    """Cria e retorna uma conexão com o banco de dados"""
+    """Cria e retorna uma conexão com o banco de dados."""
     try:
-        db = mysql.connector.connect(
+        return mysql.connector.connect(
             host="localhost",
             user="root",
             password="",
             database="dispensa"
         )
-        return db
     except Error as err:
         logging.error(f"❌ Erro ao conectar ao banco de dados: {err}")
-        return None  # Retorna None em caso de falha na conexão
+        return None
 
-# Função para testar a conexão com o banco
 def connection_test():
-    """Testa a conexão com o banco de dados"""
-    try:
-        db = connect_db()
-        if db:
-            db.close()
-            logging.info("✅ Conexão bem-sucedida com o banco de dados 'dispensa'.")
-            return True
-        else:
-            return False
-    except Exception as e:
-        logging.exception(f"❌ Exceção durante a tentativa de conexão ao banco de dados: {e}")
-        return False
-
-# Função para buscar itens da tabela 'produtos'
-def get_items_from_db():
-    """Busca os itens do banco de dados e retorna uma lista de dicionários"""
+    """Testa a conexão com o banco de dados."""
     db = connect_db()
-    if not db:  # Se a conexão falhou, retorna mensagem de erro
-        return "❌ Infelizmente não conseguimos acessar os dados.\nClique em 'Testar Conexão' para verificar a conexão com o banco de dados."
-
-    try:
+    if db:
+        db.close()
         logging.info("✅ Conexão bem-sucedida com o banco de dados 'dispensa'.")
-        cursor = db.cursor(dictionary=True)  # Retorna resultados como dicionário
-        cursor.execute('SELECT nome, quantidade, target FROM produtos ORDER BY nome ASC')
-        items = cursor.fetchall()
+        return True
+    logging.error("❌ Falha ao conectar ao banco de dados.")
+    return False
+
+def execute_query(query, params=None, fetch=False):
+    """Executa uma consulta SQL genérica."""
+    db = connect_db()
+    if not db:
+        return None if fetch else {"status": False, "mensagem": "Falha na conexão com o banco de dados."}
+    
+    try:
+        cursor = db.cursor(dictionary=True) if fetch else db.cursor()
+        cursor.execute(query, params or ())
+        
+        if fetch:
+            result = cursor.fetchall()
+            cursor.close()
+            db.close()
+            return result
+        
+        db.commit()
         cursor.close()
-
-        if items is None:  # Garante que sempre retorna uma lista
-            return []
-
-        return items  
-
+        db.close()
+        return {"status": True}
     except Error as err:
-        logging.error(f"❌ Erro ao buscar itens do banco de dados: {err}")
-        return "❌ Erro ao buscar itens no banco de dados. Tente novamente mais tarde."
+        logging.error(f"❌ Erro ao executar query: {err}")
+        return None if fetch else {"status": False, "mensagem": str(err)}
 
-    finally:
-        if db.is_connected():
-            db.close()  # Fecha a conexão
+def get_items_from_db():
+    """Busca os itens do banco de dados."""
+    query = 'SELECT nome, quantidade, target FROM produtos ORDER BY nome ASC'
+    result = execute_query(query, fetch=True)
+    return result if result is not None else "❌ Erro ao buscar itens no banco de dados."
 
-
-# função para adicionar itens ao banco de dados
 def add_item_to_db(values):
     """Adiciona um item ao banco de dados."""
     if not connection_test():
         return {"status": False, "mensagem": "Falha na conexão com o banco de dados."}
-
-    nome = values["nome"]
-    quantidade = values["quantidade"]
-    quantidade_referencia = values["quantidade_referencia"]
-    essencial = values["essencial"]
-    periodo = values["periodo"]
-
-    try:
-        db = connect_db()
-        if not db:
-            return {"status": False, "mensagem": "Falha ao conectar ao banco de dados para inserção."}
-        
-        cursor = db.cursor()
-
-        # Verifica se o produto já existe
-        cursor.execute("SELECT COUNT(*) FROM produtos WHERE nome = %s", (nome,))
-        if cursor.fetchone()[0] > 0:
-            logging.warning(f"O Produto '{nome}' já existe no banco de dados.")
-            return {"status": False, "mensagem": f"O Produto '{nome}' já existe!"}
-
-        # Comando SQL para adicionar um item
-        sql_query = """
+    
+    nome, quantidade, quantidade_referencia, essencial, periodo = (
+        values["nome"], values["quantidade"], values["quantidade_referencia"], values["essencial"], values["periodo"]
+    )
+    
+    if execute_query("SELECT COUNT(*) FROM produtos WHERE nome = %s", (nome,), fetch=True)[0]['COUNT(*)'] > 0:
+        logging.warning(f"⚠️ O Produto '{nome}' já existe no banco de dados.")
+        return {"status": False, "mensagem": f"O Produto '{nome}' já existe!"}
+    
+    query = """
         INSERT INTO produtos (nome, quantidade, target, essencial, periodo_de_compra)
         VALUES (%s, %s, %s, %s, %s)
-        """
-        cursor.execute(sql_query, (nome, quantidade, quantidade_referencia, essencial, periodo))
-
-        db.commit()  # Confirma a transação
-        logging.info(f"O Produto '{nome}' foi adicionado ao banco de dados com sucesso!")
-        
-        cursor.close()
-        db.close()
-        
-        return {"status": True, "mensagem": f"O Produto '{nome}' foi adicionado ao banco de dados com sucesso!"}
-
-    except Error as e:
-        logging.error(f"Erro ao adicionar o Produto '{nome}' ao banco de dados: {e}")
-        return {"status": False, "mensagem": f"Erro ao adicionar o Produto '{nome}' ao banco de dados: {e}"}
-
+    """
+    result = execute_query(query, (nome, quantidade, quantidade_referencia, essencial, periodo))
+    
+    if result["status"]:
+        logging.info(f"✅ O Produto '{nome}' foi adicionado ao banco de dados com sucesso!")
+    return result

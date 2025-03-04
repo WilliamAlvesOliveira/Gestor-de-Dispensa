@@ -135,8 +135,9 @@ def show_list_frame(frame):
         item_frame.pack(padx=10, pady=5, anchor="center")
         item_frame.pack_propagate(False)
 
-        # Nome do produto
-        create_label(item_frame, item["nome"], 20).pack(side="left", padx=10, pady=5)
+        # Nome do produto com a primeira letra maiúscula sem alterar o restante
+        product_name = item["nome"][0].upper() + item["nome"][1:] if item["nome"] else ""
+        create_label(item_frame, product_name, 20).pack(side="left", padx=10, pady=5)
 
         # Quantidade do produto
         quantity_label = create_label(item_frame, str(item["quantidade"]), 20)
@@ -144,6 +145,7 @@ def show_list_frame(frame):
         quantity_label.pack(side="right", padx=10, pady=5)
 
     return scrollable_frame
+
 
 
 
