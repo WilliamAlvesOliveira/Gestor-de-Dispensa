@@ -42,7 +42,7 @@ def get_items_from_db():
     try:
         logging.info("✅ Conexão bem-sucedida com o banco de dados 'dispensa'.")
         cursor = db.cursor(dictionary=True)  # Retorna resultados como dicionário
-        cursor.execute('SELECT nome, quantidade, target FROM produtos')
+        cursor.execute('SELECT nome, quantidade, target FROM produtos ORDER BY nome ASC')
         items = cursor.fetchall()
         cursor.close()
 
@@ -85,7 +85,7 @@ def add_item_to_db(values):
             logging.warning(f"O Produto '{nome}' já existe no banco de dados.")
             return {"status": False, "mensagem": f"O Produto '{nome}' já existe!"}
 
-        # Exemplo de comando SQL para adicionar um item
+        # Comando SQL para adicionar um item
         sql_query = """
         INSERT INTO produtos (nome, quantidade, target, essencial, periodo_de_compra)
         VALUES (%s, %s, %s, %s, %s)
