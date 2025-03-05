@@ -24,7 +24,7 @@ def create_label(parent, text, font_size, *style):
 
 def create_button(parent, image_path, text, command=None, fg_color="gray", row=0, column=0):
     """Cria um botão com imagem e texto."""
-    img = load_img(image_path)
+    img = load_img(image_path) if image_path else None 
     button = ctk.CTkButton(
         parent,
         image=img if img else None,
@@ -38,6 +38,8 @@ def create_button(parent, image_path, text, command=None, fg_color="gray", row=0
         button.image = img  # Evita que a imagem seja coletada pelo garbage collector
 
     button.grid(row=row, column=column, sticky="nsew")
+
+    return button
 
 
 def create_scrollable_frame(parent):

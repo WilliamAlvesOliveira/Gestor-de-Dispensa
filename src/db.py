@@ -48,10 +48,21 @@ def execute_query(query, params=None, fetch=False):
     except Error as err:
         logging.error(f"❌ Erro ao executar query: {err}")
         return None if fetch else {"status": False, "mensagem": str(err)}
+    
 
-def get_items_from_db():
+def find_item_in_db(item_name, fields):
+    """Encontra um item no banco de dados pelo nome."""
+    query = f'SELECT {", ".join(fields)} FROM produtos WHERE nome = %s'
+    result = execute_query(query, params=(item_name,), fetch=True)
+    if result:
+        return {"status": True, "item": result[0]}
+    else:
+        return {"status": False, "mensagem": "Item não encontrado."}
+
+
+def get_items_from_db(fields):
     """Busca os itens do banco de dados."""
-    query = 'SELECT nome, quantidade, target FROM produtos ORDER BY nome ASC'
+    query = f'SELECT {", ".join(fields)} FROM produtos ORDER BY nome ASC'
     result = execute_query(query, fetch=True)
     return result if result is not None else "❌ Erro ao buscar itens no banco de dados."
 
@@ -77,3 +88,20 @@ def add_item_to_db(values):
     if result["status"]:
         logging.info(f"✅ O Produto '{nome}' foi adicionado ao banco de dados com sucesso!")
     return result
+
+
+def delete_item_from_db(item_name):
+    """Remove um item do banco de dados."""
+    if not connection_test():
+        return {"status": False, "mensagem": "Falha na conexão com o banco de dados."}
+
+    # Executar a query para remover o item pelo nome
+    query = "DELETE FROM produtos WHERE nome = %s"
+    result = execute_query(query, (item_name,))
+    
+    if result:
+        logging.info(f"✅ O Produto '{item_name}' foi removido do banco de dados com sucesso!")
+        return {"status": True, "mensagem": f"O Produto '{item_name}' foi removido com sucesso!"}
+    else:
+        logging.error(f"❌ Falha ao remover o Produto '{item_name}'.")
+        return {"status": False, "mensagem": f"Falha ao remover o Produto '{item_name}'."}

@@ -1,5 +1,5 @@
-from .db import connection_test, get_items_from_db
-from .utils import create_label,  create_scrollable_frame, create_form, update_message
+from .db import connection_test, get_items_from_db, find_item_in_db, delete_item_from_db
+from .utils import create_label,  create_scrollable_frame, create_form, update_message, create_button
 import customtkinter as ctk
 import logging
 
@@ -80,6 +80,7 @@ def add_item_frame(frame):
 def remove_item_frame(frame):
     """Cria o frame para remover itens."""
     logging.info("Acessando tela de remoção de itens...")
+    
     clear_frame(frame)
     scrollable_frame = create_scrollable_frame(frame)
     scrollable_frame.grid_columnconfigure(0, weight=1)
@@ -87,13 +88,106 @@ def remove_item_frame(frame):
     # Título do frame
     create_label(scrollable_frame, "Remover Item", 22, "bold").pack(fill="x", padx=5, pady=5)
 
-    # Formulário de remoção de itens
-    create_form(scrollable_frame, [
-        ("label", "Nome do produto que você deseja excluir:"),
-        ("input", "Nome do produto", "Nome do produto")
-    ])
+    # Campo de busca
+    search_frame = ctk.CTkFrame(scrollable_frame, fg_color="white")
+    search_frame.pack(anchor="center", padx=10, pady=5)
 
+    create_label(search_frame, "Encontrar produto:", 16, "bold").pack(side="left", padx=5)
+
+    search_entry = ctk.CTkEntry(search_frame, placeholder_text="Nome do produto", width=200)
+    search_entry.pack(side="left", padx=5)
+    
+    search_button = ctk.CTkButton(search_frame, text="buscar", corner_radius=1000, fg_color="green", font=("Arial",16,"bold"))
+    search_button.pack(side="left", padx=5)
+
+    fields = ["nome"]
+    items = get_items_from_db(fields)
+
+    if isinstance(items, str) or not items:
+        error_message = items if isinstance(items, str) else "Não há itens na sua dispensa!"
+        error_label = create_label(scrollable_frame, error_message, 24, "bold")
+        error_label.configure(text_color="red")
+        error_label.pack(pady=20)
+        return scrollable_frame
+    
+    for item in items:
+        item_frame = ctk.CTkFrame(scrollable_frame,width=400, height=50)
+        item_frame.pack(anchor="center", padx=10, pady=5)
+        item_frame.pack_propagate(False)
+
+        product_name = item["nome"][0].upper() + item["nome"][1:] if item["nome"] else ""
+        remove_button = create_button(item_frame, None, product_name, command= lambda  nome=item["nome"]: confirm_remove_item(frame, nome), fg_color="red", row=0, column=0)
+        remove_button.configure(font=("Arial", 18))
+        
     return scrollable_frame
+
+
+def confirm_remove_item(frame, item_name):
+    """Confirma a remoção do item."""
+    logging.info(f"O produto {item_name} foi selecionado.")
+    clear_frame(frame)
+
+    # Buscar informações do item
+    fields = ["nome", "quantidade", "target"]
+    results = find_item_in_db(item_name, fields)
+    if not results["status"]:
+        error_message = results["mensagem"]
+        error_label = create_label(frame, error_message, 24, "bold")
+        error_label.pack(pady=20)
+        error_label.configure(text_color="red")  # Ajustar para usar text_color
+        return frame
+
+    item = results["item"]
+
+    # Mensagem de confirmação
+    confirm_label = create_label(frame, f"Tem certeza que deseja remover o item:", 16, "bold")
+    confirm_label.pack(pady=20)
+    confirm_label.configure(text_color="red")  # Ajustar para usar text_color
+
+    # Informações do item
+    item_frame = ctk.CTkFrame(frame, width=400, height=50)
+    item_frame.pack(padx=10, pady=5, anchor="center")
+    item_frame.pack_propagate(False)
+
+    product_name = item["nome"][0].upper() + item["nome"][1:] if item["nome"] else ""
+    create_label(item_frame, product_name, 20).pack(side="left", padx=10, pady=5)
+
+    quantity_label = create_label(item_frame, str(item["quantidade"]), 20)
+    quantity_label.configure(text_color="red" if item["quantidade"] < item["target"] else "green")
+    quantity_label.pack(side="right", padx=10, pady=5)
+
+    # Botões de confirmação e cancelamento
+    button_frame = ctk.CTkFrame(frame, fg_color="white")
+    button_frame.pack(pady=20)
+
+    yes_button = ctk.CTkButton(button_frame, text="Confirmar", corner_radius=1000, fg_color="red", font=("Arial",20,"bold"), command= lambda : handle_delete_item(item["nome"],frame))
+    yes_button.pack(side="left", padx=10)
+
+    cancel_button = ctk.CTkButton(button_frame, text="Cancelar", corner_radius=1000, fg_color="blue", font=("Arial",20,"bold"), command=lambda :remove_item_frame(frame))
+    cancel_button.pack(side="left", padx=10)
+
+
+def handle_delete_item(item_name, frame):
+    """Lida com a remoção do item e exibe a mensagem de sucesso ou erro."""
+    clear_frame(frame)
+
+    result = delete_item_from_db(item_name)
+
+    # Criar um novo frame para a mensagem
+    message_frame = ctk.CTkFrame(frame, fg_color="white")
+    message_frame.pack(pady=20)
+
+    # Adicionar a mensagem no frame de mensagem
+    message_label = create_label(message_frame, result["mensagem"], 24, "bold")
+    message_label.pack(pady=20)
+    message_label.configure(text_color="green" if result["status"] else "red")
+
+    button_frame = ctk.CTkFrame(frame, fg_color="white")
+    button_frame.pack(pady=20, padx=10, anchor="center")
+
+    back_button = ctk.CTkButton(button_frame, text="Voltar", corner_radius=1000, fg_color="blue", font=("Arial", 20, "bold"), command=lambda: remove_item_frame(frame))
+    back_button.pack(pady=10)
+
 
 def edit_item_frame(frame):
     logging.info("Botão: Editar Item foi clicado!")
@@ -121,12 +215,15 @@ def show_list_frame(frame):
     create_label(scrollable_frame, "Itens da Dispensa", 24, "underline", "bold").pack(fill="x", padx=20, pady=20)
 
     # Busca os itens no banco de dados
-    items = get_items_from_db()
+    fields = ["nome","quantidade","target"]
+    items = get_items_from_db(fields)
 
     # Verifica se há itens
     if isinstance(items, str) or not items:
         error_message = items if isinstance(items, str) else "Não há itens na sua dispensa!"
-        create_label(scrollable_frame, error_message, 24, "bold").pack(pady=20)
+        error_label = create_label(scrollable_frame, error_message, 24, "bold")
+        error_label.configure(text_color="red")
+        error_label.pack(pady=20)
         return scrollable_frame
 
     # Exibe os itens
