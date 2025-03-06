@@ -15,6 +15,7 @@ def connect_db():
         logging.error(f"❌ Erro ao conectar ao banco de dados: {err}")
         return None
 
+
 def connection_test():
     """Testa a conexão com o banco de dados."""
     db = connect_db()
@@ -24,6 +25,7 @@ def connection_test():
         return True
     logging.error("❌ Falha ao conectar ao banco de dados.")
     return False
+
 
 def execute_query(query, params=None, fetch=False):
     """Executa uma consulta SQL genérica."""
@@ -66,6 +68,7 @@ def get_items_from_db(fields):
     result = execute_query(query, fetch=True)
     return result if result is not None else "❌ Erro ao buscar itens no banco de dados."
 
+
 def add_item_to_db(values):
     """Adiciona um item ao banco de dados."""
     if not connection_test():
@@ -105,3 +108,4 @@ def delete_item_from_db(item_name):
     else:
         logging.error(f"❌ Falha ao remover o Produto '{item_name}'.")
         return {"status": False, "mensagem": f"Falha ao remover o Produto '{item_name}'."}
+

@@ -3,6 +3,7 @@ import customtkinter as ctk
 import logging
 from .db import add_item_to_db
 
+
 # Configuração do logging
 logging.basicConfig(level=logging.DEBUG)
 

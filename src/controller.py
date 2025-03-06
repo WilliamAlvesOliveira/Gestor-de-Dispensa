@@ -87,7 +87,12 @@ def remove_item_frame(frame):
 
     # Título do frame
     create_label(scrollable_frame, "Remover Item", 22, "bold").pack(fill="x", padx=5, pady=5)
-
+    
+    #Mensagem de erro na busca
+    search_error = create_label(scrollable_frame, "",12)
+    search_error.pack(fill="x",padx=5, pady=2)
+    search_error.configure(text_color="red")
+   
     # Campo de busca
     search_frame = ctk.CTkFrame(scrollable_frame, fg_color="white")
     search_frame.pack(anchor="center", padx=10, pady=5)
@@ -97,7 +102,7 @@ def remove_item_frame(frame):
     search_entry = ctk.CTkEntry(search_frame, placeholder_text="Nome do produto", width=200)
     search_entry.pack(side="left", padx=5)
     
-    search_button = ctk.CTkButton(search_frame, text="buscar", corner_radius=1000, fg_color="green", font=("Arial",16,"bold"))
+    search_button = ctk.CTkButton(search_frame, text="buscar", corner_radius=1000, fg_color="green", font=("Arial",16,"bold"),command=lambda: search_product(frame, search_entry, search_error))
     search_button.pack(side="left", padx=5)
 
     fields = ["nome"]
@@ -117,9 +122,27 @@ def remove_item_frame(frame):
 
         product_name = item["nome"][0].upper() + item["nome"][1:] if item["nome"] else ""
         remove_button = create_button(item_frame, None, product_name, command= lambda  nome=item["nome"]: confirm_remove_item(frame, nome), fg_color="red", row=0, column=0)
-        remove_button.configure(font=("Arial", 18))
+        remove_button.configure(font=("Arial", 18, 'underline'))
         
     return scrollable_frame
+
+
+def search_product(frame, entry, lanel):
+    """Busca produto para remoção"""
+    logging.info("Botão Buscar clicado.")
+    produto_name = entry.get()
+    logging.info(f"Buscando por: {produto_name}")
+    field = ["nome"]
+    search_result = find_item_in_db(produto_name, field)
+    if search_result["status"]:
+       product = search_result["item"]
+       logging.info(f'Produto {product["nome"]} encontrado.')
+       nome = product['nome']
+       confirm_remove_item(frame,nome)
+    else:
+        logging.info('Produto não encontrado')
+        entry.delete(0, 'end')
+        lanel.configure(text='Produto não encontrado')
 
 
 def confirm_remove_item(frame, item_name):
@@ -244,18 +267,53 @@ def show_list_frame(frame):
     return scrollable_frame
 
 
-
-
 def shop_list_frame(frame):
-
+    """função para criar o frame de lista de compras"""
     logging.info("Botão: Lista de Compras foi clicado!")
 
-    for widget in frame.winfo_children():
-        widget.destroy()
+    clear_frame(frame)
+    scrollable_frame = create_scrollable_frame(frame)
+    scrollable_frame.grid_columnconfigure(0, weight=1)
 
-    shop_list = ctk.CTkFrame(frame, fg_color="white")
-    shop_list.pack(fill="both", expand=True, padx=10, pady=10)
+    create_label(scrollable_frame, "Lista de Compras", 24, 'underline').pack(fill='x', padx=10, pady=10)
 
-    label = ctk.CTkLabel(shop_list, text="Lista de Compras", anchor="w")
-    label.pack(fill="x", padx=5, pady=0)
+    fields = ["nome", "quantidade","target", 'essencial']
+    itens = get_items_from_db(fields)
+
+    itens_essenciais  =[]
+    outros  = []
+    for item in itens:
+        if item['quantidade']<item['target']:
+            if bool(item['essencial']):
+                produto = {'nome' : item['nome'], 'quantidade': item['target'] - item['quantidade']}
+                itens_essenciais.append(produto)
+            else:
+               produto = {'nome' : item['nome'], 'quantidade': item['target'] - item['quantidade']}
+               outros.append(produto)
+               
+    logging.info('Gerando lista de compras')
+
+    for produtos in itens_essenciais:
+        essential_items_frame = ctk.CTkFrame(scrollable_frame, width=400, height=50)
+        essential_items_frame.pack(padx=10, pady=5, anchor="center")
+        essential_items_frame.pack_propagate(False)
+
+        product_label = create_label(essential_items_frame, produtos['nome'], 24, "bold")
+        product_label.pack(side="left", padx=3, pady=5, anchor='w')
+
+        quantity_label = create_label(essential_items_frame, str(produtos["quantidade"]), 24, 'bold')
+        quantity_label.pack(side='right', padx=5, pady=5)
+
+    create_label(scrollable_frame, "Itens Complementares", 16, 'underline').pack(fill='x', padx=10, pady=10)
+
+    for produtos in outros:
+        itens_complementares_frame = ctk.CTkFrame(scrollable_frame, width=200, height=30)
+        itens_complementares_frame.pack(padx=10, pady=5, anchor='center')
+        itens_complementares_frame.pack_propagate(False)
+
+        product_label= create_label(itens_complementares_frame, produtos['nome'], 16, 'bold')
+        product_label.pack(side='left', padx=5, pady=5, anchor='w')
+
+        quantity_label = create_label( itens_complementares_frame, str(produtos['quantidade']), 16, 'bold')
+        quantity_label.pack(side='right', padx=5, pady=5)
 
