@@ -1,5 +1,7 @@
 from PIL import Image
 import customtkinter as ctk
+import threading
+import time
 import logging
 from .db import add_item_to_db
 
@@ -155,3 +157,45 @@ def clear_form(entries, form):
         elif element_type == "radio" and text in entries:
             entries[text].set(item[2])
 
+def edit_grid(frame, itens):
+    # Cria o layout da grade
+    grid_layout = ctk.CTkFrame(frame, fg_color='white')
+    grid_layout.pack(fill="both", expand=True, padx=10, pady=10)  # Usar pack para o grid_layout
+
+    for column in range(0, 4):
+        grid_layout.grid_columnconfigure(column, weight=1)
+
+    for indice, item in enumerate(itens):
+        edit = create_button(grid_layout, None, 'Editar', None, 'blue', indice, 0)
+        edit.configure(width=0)
+        create_label(grid_layout, item['nome'], 20).grid(row=indice, column=1, sticky='w')
+        input = (ctk.CTkEntry(grid_layout, width=50, placeholder_text=str(item['quantidade'])))
+        input.grid(row=indice, column=2, sticky='e')
+        atualizar = create_button(grid_layout, None, 'Atualizar', None, 'green', indice, 3)
+        atualizar.configure(width=0, command=lambda btn=atualizar: on_update_click(btn))
+
+    confirm_all_frame = ctk.CTkFrame(frame, fg_color='white')
+    confirm_all_frame.pack(fill='x', padx=10, pady=10) 
+
+    ctk.CTkButton(confirm_all_frame, width=100, text='Atualizar todos os Itens', corner_radius=1000, command=None, fg_color='green').pack(padx=10, pady=10)
+
+    return grid_layout
+
+
+
+def animate_button_text(button, original_text):
+    for i in range(3):
+        button.configure(text="." * (i + 1))
+        button.update()
+        time.sleep(0.8)
+    
+    button.configure(text="✓")
+    button.update()
+    time.sleep(1)
+    
+    button.configure(text=original_text)
+    button.update()
+
+def on_update_click(button):
+    original_text = button.cget("text")
+    threading.Thread(target=animate_button_text, args=(button, original_text)).start()

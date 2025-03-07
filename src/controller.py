@@ -1,5 +1,5 @@
 from .db import connection_test, get_items_from_db, find_item_in_db, delete_item_from_db
-from .utils import create_label,  create_scrollable_frame, create_form, update_message, create_button
+from .utils import create_label,  create_scrollable_frame, create_form, update_message, create_button, edit_grid
 import customtkinter as ctk
 import logging
 
@@ -213,18 +213,23 @@ def handle_delete_item(item_name, frame):
 
 
 def edit_item_frame(frame):
-    logging.info("Botão: Editar Item foi clicado!")
+    logging.info("Acessahdona tela de edição de itens")
+    clear_frame(frame)
+    scrollable_frame = create_scrollable_frame(frame)
+    scrollable_frame.grid_columnconfigure(0, weight=1)
 
-    for widget in frame.winfo_children():
-        widget.destroy()
+    fields = ['nome', 'quantidade', 'periodo_de_compra']
+    itens = get_items_from_db(fields)
 
-    edit_frame = ctk.CTkFrame(frame, fg_color="white")
-    edit_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    create_label(scrollable_frame, 'Editar Itens', 22, 'bold').pack(fill='x', padx=5, pady=5)
+    
+    edit_frame = edit_grid(scrollable_frame, itens)
+    edit_frame.pack(fill='x', padx=10, pady=10)
 
-    label = ctk.CTkLabel(edit_frame, text="Editar Item", anchor="w")
-    label.pack(fill="x", padx=5, pady=0)
 
-    return edit_frame
+
+
+    return scrollable_frame
 
 
 def show_list_frame(frame):
