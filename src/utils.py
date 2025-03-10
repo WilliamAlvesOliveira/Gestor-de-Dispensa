@@ -3,7 +3,7 @@ import customtkinter as ctk
 import threading
 import time
 import logging
-from .db import add_item_to_db
+from .db import add_item_to_db, edit_quantity_in_db
 
 
 # Configuração do logging
@@ -157,45 +157,114 @@ def clear_form(entries, form):
         elif element_type == "radio" and text in entries:
             entries[text].set(item[2])
 
+            
 def edit_grid(frame, itens):
-    # Cria o layout da grade
     grid_layout = ctk.CTkFrame(frame, fg_color='white')
-    grid_layout.pack(fill="both", expand=True, padx=10, pady=10)  # Usar pack para o grid_layout
+    grid_layout.pack(fill="both", expand=True, padx=10, pady=10)
 
+    # Configura 4 colunas com peso igual.
     for column in range(0, 4):
         grid_layout.grid_columnconfigure(column, weight=1)
 
+    entries = []
+
+    # Cria um frame para a mensagem de status.
+    confirm_all_frame = ctk.CTkFrame(frame, fg_color='white')
+    confirm_all_frame.pack(fill='x', padx=10, pady=10)
+
+    # Cria o widget status_message que exibirá o feedback de cada operação.
+    status_message = create_label(confirm_all_frame, '', 14)
+    status_message.pack(fill='x', padx=5, pady=0)
+
+    # Função para criar o comando de atualização para cada item individual
+    def create_update_command(nome, entry, btn):
+        return lambda: validate_edit_values(
+            [{'nome': nome, 'quantidade': entry.get()}],
+            btn,
+            btn.cget('text'),
+            status_message
+        )
+
+    # Cria as linhas da grid para cada item
     for indice, item in enumerate(itens):
         edit = create_button(grid_layout, None, 'Editar', None, 'blue', indice, 0)
         edit.configure(width=0)
-        create_label(grid_layout, item['nome'], 20).grid(row=indice, column=1, sticky='w')
-        input = (ctk.CTkEntry(grid_layout, width=50, placeholder_text=str(item['quantidade'])))
-        input.grid(row=indice, column=2, sticky='e')
+        
+        # Cria um rótulo com o nome do produto
+        create_label(grid_layout, item['nome'], 20).grid(padx= 15, row=indice, column=1, sticky='w')
+        
+        # Cria a entrada para a quantidade, com o placeholder sendo a quantidade atual
+        entry_quantity = ctk.CTkEntry(grid_layout, width=50, placeholder_text=str(item['quantidade']))
+        entry_quantity.grid(padx=15, row=indice, column=2, sticky='e')
+        entries.append({'nome': item['nome'], 'quantidade': entry_quantity})
+        
+        # Botão para atualizar o item individual
         atualizar = create_button(grid_layout, None, 'Atualizar', None, 'green', indice, 3)
-        atualizar.configure(width=0, command=lambda btn=atualizar: on_update_click(btn))
+        atualizar.configure(width=0, command=create_update_command(item['nome'], entry_quantity, atualizar))
 
-    confirm_all_frame = ctk.CTkFrame(frame, fg_color='white')
-    confirm_all_frame.pack(fill='x', padx=10, pady=10) 
-
-    ctk.CTkButton(confirm_all_frame, width=100, text='Atualizar todos os Itens', corner_radius=1000, command=None, fg_color='green').pack(padx=10, pady=10)
+    # Botão "Atualizar todos os Itens"
+    atualizar_todos = ctk.CTkButton(
+        confirm_all_frame,
+        width=200,
+        text='Atualizar todos os Itens',
+        corner_radius=1000,
+        fg_color='green'
+    )
+    atualizar_todos.configure(
+        command=lambda: validate_edit_values(
+            [{'nome': data['nome'], 'quantidade': data['quantidade'].get()} for data in entries],
+            atualizar_todos,
+            atualizar_todos.cget("text"),
+            status_message
+        )
+    )
+    atualizar_todos.pack(padx=10, pady=10)
 
     return grid_layout
 
 
+def validate_edit_values(items, button, button_text, status_message):
+    logging.info('Verificando valores editados')
+    query_itens = []
 
-def animate_button_text(button, original_text):
-    for i in range(3):
-        button.configure(text="." * (i + 1))
+    for item in items:
+        if item['quantidade'] != '':
+            if not item['quantidade'].isdigit() or int(item['quantidade']) < 0:
+                error_message = (
+                    f"Valor inválido para o produto '{item.get('nome')}'. "
+                    f"Valor recebido: '{item['quantidade']}'"
+                )
+                logging.error(error_message)
+                animate_button_text(button, button_text, success=False)
+                status_message.configure(text=f"Erro: {error_message}", text_color="red")
+                return
+            else:
+                query_itens.append({
+                    'nome': item.get('nome'),
+                    'quantidade': int(item['quantidade'])
+                })
+
+    if len(query_itens) > 0:
+        edit_quantity_in_db(query_itens)
+
+    logging.info("Todos os valores são válidos. Atualizando os itens.")
+    animate_button_text(button, button_text, success=True)
+    status_message.configure(text="Sucesso: Todos os itens foram atualizados.", text_color="green")
+
+
+def animate_button_text(button, original_text, success=True):
+    """Anima o botão sem travar a interface."""
+    def update_text():
+        for i in range(3):
+            button.configure(text="." * (i + 1))
+            button.update()
+            time.sleep(0.8)
+        
+        button.configure(text="✓" if success else "✗", fg_color="green" if success else "red")
         button.update()
-        time.sleep(0.8)
-    
-    button.configure(text="✓")
-    button.update()
-    time.sleep(1)
-    
-    button.configure(text=original_text)
-    button.update()
+        time.sleep(1)
+        
+        button.configure(text=original_text, fg_color="green")
+        button.update()
 
-def on_update_click(button):
-    original_text = button.cget("text")
-    threading.Thread(target=animate_button_text, args=(button, original_text)).start()
+    threading.Thread(target=update_text, daemon=True).start()

@@ -2,6 +2,7 @@ import logging
 import mysql.connector
 from mysql.connector import Error
 
+
 def connect_db():
     """Cria e retorna uma conexão com o banco de dados."""
     try:
@@ -108,4 +109,22 @@ def delete_item_from_db(item_name):
     else:
         logging.error(f"❌ Falha ao remover o Produto '{item_name}'.")
         return {"status": False, "mensagem": f"Falha ao remover o Produto '{item_name}'."}
+
+
+def edit_quantity_in_db(items):
+    logging.info('Atualizando quantidade no Banco de dados.')
+    atualizar_quantidades = []
+    for item in items:
+        if item['quantidade'] != '':
+            atualizar_quantidades.append({'nome': item['nome'], 'quantidade': item['quantidade']})
+
+            query = "UPDATE produtos SET quantidade =  %s WHERE nome = %s"
+
+            result = execute_query(query, params=(item['quantidade'], item['nome']))
+
+            if result is not None and result.get('status'):
+                logging.info(f'O produto {item["nome"]} foi atualizado para a quantidade {item["quantidade"]}.')
+            else:
+                mensagem = result.get("mensagem") if result is not None else "Erro desconhecido"
+                logging.error(f"Erro ao atualizar o produto '{item['nome']}': {mensagem}")
 
