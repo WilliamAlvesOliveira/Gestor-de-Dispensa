@@ -128,3 +128,41 @@ def edit_quantity_in_db(items):
                 mensagem = result.get("mensagem") if result is not None else "Erro desconhecido"
                 logging.error(f"Erro ao atualizar o produto '{item['nome']}': {mensagem}")
 
+
+def edit_item_in_db(item_name, query_list):
+    """Edita um item no banco de dados com os valores fornecidos."""
+    logging.info(f'Editando item "{item_name}" no banco de dados.')
+
+    if not connection_test():
+        return {"status": False, "mensagem": "Falha na conexão com o banco de dados."}
+
+    if not query_list:
+        logging.info(f"Nenhuma alteração identificada para o item: {item_name}")
+        return {"status": True, "mensagem": "Nenhuma alteração necessária."}
+
+    db = connect_db()
+    cursor = db.cursor()
+
+    try:
+        set_clause = ", ".join([f"{campo} = %s" for campo in query_list.keys()])
+        update_query = f"UPDATE produtos SET {set_clause} WHERE nome = %s"
+
+        values = list(query_list.values()) + [item_name]
+        cursor.execute(update_query, values)
+        
+        if cursor.rowcount > 0:
+            db.commit()
+            logging.info(f"Item '{item_name}' atualizado com sucesso: {query_list}")
+            return {"status": True, "mensagem": "Item atualizado com sucesso."}
+        else:
+            logging.warning(f"Nenhum item atualizado. O nome '{item_name}' pode não existir.")
+            return {"status": False, "mensagem": "Nenhuma alteração feita. O item pode não existir."}
+    
+    except Exception as e:
+        db.rollback()
+        logging.error(f"Erro ao atualizar o item '{item_name}': {e}")
+        return {"status": False, "mensagem": "Erro ao atualizar o item no banco de dados."}
+
+    finally:
+        cursor.close()
+        db.close()

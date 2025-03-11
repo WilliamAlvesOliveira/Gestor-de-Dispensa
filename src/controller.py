@@ -1,5 +1,5 @@
 from .db import connection_test, get_items_from_db, find_item_in_db, delete_item_from_db
-from .utils import create_label,  create_scrollable_frame, create_form, update_message, create_button, edit_grid
+from .utils import clear_frame, create_label,  create_scrollable_frame, create_form, update_message, create_button, create_edit_grid
 import customtkinter as ctk
 import logging
 
@@ -15,12 +15,6 @@ def show_results(label_result):
     except Exception as e:
         logging.error(f"Erro ao conectar: {e}")
         label_result.configure(text="❌ Exceção ao tentar conectar ao banco de dados.", text_color="red")
-
-
-def clear_frame(frame):
-    """Remove todos os widgets do frame."""
-    for widget in frame.winfo_children():
-        widget.destroy()
 
 
 def boas_vindas(frame):
@@ -47,6 +41,7 @@ def add_item_frame(frame):
     # Título do frame
     create_label(scrollable_frame, "Adicionar Item", 22, "bold").pack(fill="x", padx=5, pady=5)
 
+    essencial_default = "Sim"
     # Formulário de adição de itens
     form = [
         ("label", "Nome do Produto *"),
@@ -56,10 +51,11 @@ def add_item_frame(frame):
         ("label", "Quantidade de Referência *"),
         ("input", "Quantidade de Referência", "Digite a quantidade a ser mantida"),
         ("label", "Essencial"),
-        ("radio", "Essencial", "Sim", "Não"),
+        ("radio", "Essencial", essencial_default, "Sim", "Não"),
         ("label", "Período de Compra"),
-        ("radio", "Periodo de Compra", "Mensal", "Quinzenal", "Semanal"),
+        ("radio", "Periodo de Compra",'mensal', "Mensal", "Quinzenal", "Semanal"),
     ]
+    
     entries = create_form(scrollable_frame, form)
 
     # Mensagem de feedback
@@ -70,7 +66,7 @@ def add_item_frame(frame):
     ctk.CTkButton(
         scrollable_frame,
         text="Adicionar Item",
-        command=lambda: update_message(entries, message_label, form),
+        command=lambda: update_message('adicionar',None, entries, message_label, form),
         fg_color="green"
     ).pack(padx=6, pady=5)
 
@@ -213,22 +209,20 @@ def handle_delete_item(item_name, frame):
 
 
 def edit_item_frame(frame):
-    logging.info("Acessahdona tela de edição de itens")
+    logging.info("Acessando a tela de edição de itens")
     clear_frame(frame)
+    
     scrollable_frame = create_scrollable_frame(frame)
     scrollable_frame.grid_columnconfigure(0, weight=1)
-
-    fields = ['nome', 'quantidade', 'periodo_de_compra']
-    itens = get_items_from_db(fields)
-
+    
     create_label(scrollable_frame, 'Editar Itens', 22, 'bold').pack(fill='x', padx=5, pady=5)
     
-    edit_frame = edit_grid(scrollable_frame, itens)
+    fields = ['nome', 'quantidade', 'periodo_de_compra']
+    itens = get_items_from_db(fields)
+    
+    edit_frame = create_edit_grid(scrollable_frame, itens)
     edit_frame.pack(fill='x', padx=10, pady=10)
-
-
-
-
+    
     return scrollable_frame
 
 
@@ -302,8 +296,8 @@ def shop_list_frame(frame):
         essential_items_frame = ctk.CTkFrame(scrollable_frame, width=400, height=50)
         essential_items_frame.pack(padx=10, pady=5, anchor="center")
         essential_items_frame.pack_propagate(False)
-
-        product_label = create_label(essential_items_frame, produtos['nome'], 24, "bold")
+    
+        product_label = create_label(essential_items_frame, produtos["nome"][0].upper() + produtos["nome"][1:] if produtos["nome"] else "", 24, "bold")
         product_label.pack(side="left", padx=3, pady=5, anchor='w')
 
         quantity_label = create_label(essential_items_frame, str(produtos["quantidade"]), 24, 'bold')
@@ -316,7 +310,7 @@ def shop_list_frame(frame):
         itens_complementares_frame.pack(padx=10, pady=5, anchor='center')
         itens_complementares_frame.pack_propagate(False)
 
-        product_label= create_label(itens_complementares_frame, produtos['nome'], 16, 'bold')
+        product_label= create_label(itens_complementares_frame, produtos["nome"][0].upper() + produtos["nome"][1:] if produtos["nome"] else "", 16, 'bold')
         product_label.pack(side='left', padx=5, pady=5, anchor='w')
 
         quantity_label = create_label( itens_complementares_frame, str(produtos['quantidade']), 16, 'bold')
