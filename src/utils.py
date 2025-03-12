@@ -161,8 +161,7 @@ def validate_values(action, item_name, entries):
         create_edit_query(item_name, original_item[0], values)
 
         return {"status": True, "mensagem": f"O Produto '{nome}' foi adicionado com sucesso!"}
-        
-        
+           
     
 def update_message(action,item_name, entries, message_label, form):
     """Atualiza a mensagem na interface e adiciona ao banco se os valores forem válidos."""
@@ -254,24 +253,19 @@ def validate_edit_values(items, button, button_text, status_message):
             status_message.configure(text="Sucesso: Todos os itens foram atualizados.", text_color="green")
         animate_button_text(button, button_text, success=True)
 
+
 def animate_button_text(button, original_text, success=True):
-    def update_text():
-        for i in range(3):
-            if button.winfo_exists():
-                button.configure(text="." * (i + 1))
-                button.update()
-                time.sleep(0.3)
-        
-        if button.winfo_exists():
+    def update_text(i=0):
+        if i < 3:
+            button.configure(text="." * (i + 1))
+            button.after(300, update_text, i + 1)
+        else:
             button.configure(text="✓" if success else "✗", fg_color="green" if success else "red")
-            button.update()
-            time.sleep(1)
-        
-        if button.winfo_exists():
-            button.configure(text=original_text, fg_color="green")
-            button.update()
+            button.after(1000, lambda: button.configure(text=original_text, fg_color="green"))
     
-    threading.Thread(target=update_text, daemon=True).start()
+    update_text()
+
+
 
 def create_edit_item_form(frame, item_name):
     logging.info("Acessando tela de Editar Itens...")
@@ -334,3 +328,4 @@ def create_edit_query(item_name, original, edited):
         query_list['periodo_de_compra'] = edited['periodo']
 
     edit_item_in_db(item_name, query_list)
+

@@ -123,22 +123,22 @@ def remove_item_frame(frame):
     return scrollable_frame
 
 
-def search_product(frame, entry, lanel):
-    """Busca produto para remoção"""
-    logging.info("Botão Buscar clicado.")
-    produto_name = entry.get()
+def search_product(frame, entry, label):
+    """Busca produto para remoção e exibe resultado"""
+    produto_name = entry.get().strip()
+    if not produto_name:
+        label.configure(text="Por favor, digite um nome válido.", text_color="red")
+        return
+
     logging.info(f"Buscando por: {produto_name}")
-    field = ["nome"]
-    search_result = find_item_in_db(produto_name, field)
+    search_result = find_item_in_db(produto_name, ["nome"])
+    
     if search_result["status"]:
-       product = search_result["item"]
-       logging.info(f'Produto {product["nome"]} encontrado.')
-       nome = product['nome']
-       confirm_remove_item(frame,nome)
+        logging.info(f'Produto encontrado: {search_result["item"]["nome"]}')
+        confirm_remove_item(frame, search_result["item"]["nome"])
     else:
-        logging.info('Produto não encontrado')
-        entry.delete(0, 'end')
-        lanel.configure(text='Produto não encontrado')
+        label.configure(text="Produto não encontrado", text_color="red")
+
 
 
 def confirm_remove_item(frame, item_name):
