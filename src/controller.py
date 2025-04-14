@@ -53,7 +53,7 @@ def add_item_frame(frame):
         ("label", "Essencial"),
         ("radio", "Essencial", essencial_default, "Sim", "Não"),
         ("label", "Período de Compra"),
-        ("radio", "Periodo de Compra",'mensal', "Mensal", "Quinzenal", "Semanal"),
+        ("radio", "Periodo de Compra",'Mensal', "Mensal", "Quinzenal", "Semanal"),
     ]
     
     entries = create_form(scrollable_frame, form)

@@ -7,6 +7,8 @@ from .controller import (
 )
 from .utils import create_button
 
+from .db import create_database_if_not_exists
+
 # Configuração do logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -14,6 +16,7 @@ class DispensaApp(ctk.CTk):
     def __init__(self):
         """Inicializa a janela principal do aplicativo"""
         super().__init__()
+        create_database_if_not_exists()
         self.title("Gerenciador de Dispensa")
         self.geometry('800x400')
         self.main_frame = None  # Inicializa como None para evitar erros

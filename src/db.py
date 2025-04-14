@@ -166,3 +166,38 @@ def edit_item_in_db(item_name, query_list):
     finally:
         cursor.close()
         db.close()
+
+def create_database_if_not_exists():
+    """Cria o banco de dados 'dispensa' e a tabela 'produtos' se ainda não existirem."""
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password=""
+        )
+        cursor = connection.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS dispensa")
+        connection.database = "dispensa"
+
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS produtos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(255) NOT NULL UNIQUE,
+            quantidade INT NOT NULL,
+            target INT NOT NULL,
+            essencial BOOLEAN DEFAULT FALSE,
+            periodo_de_compra VARCHAR(20)
+        )
+        """
+        cursor.execute(create_table_query)
+        connection.commit()
+        logging.info("✅ Banco de dados e tabela criados.")
+        return {"status": True, "mensagem": "Banco de dados criado com sucesso."}
+    except Error as err:
+        logging.error(f"Erro ao criar banco de dados: {err}")
+        return {"status": False, "mensagem": f"Erro: {err}"}
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
