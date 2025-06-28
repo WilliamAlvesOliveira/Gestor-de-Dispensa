@@ -8,8 +8,9 @@ def connect_db():
     try:
         return mysql.connector.connect(
             host="localhost",
+            port=3306,
             user="root",
-            password="",
+            password='',
             database="dispensa"
         )
     except Error as err:
