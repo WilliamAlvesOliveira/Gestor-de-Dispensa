@@ -8,9 +8,9 @@ def connect_db():
     try:
         return mysql.connector.connect(
             host="localhost",
-            port=3306,
-            user="root",
-            password='',
+            port=3307,
+            user="gestor",
+            password='gestor123',
             database="dispensa"
         )
     except Error as err:
@@ -168,17 +168,21 @@ def edit_item_in_db(item_name, query_list):
         cursor.close()
         db.close()
 
+import mysql.connector
+from mysql.connector import Error
+import logging
+
 def create_database_if_not_exists():
-    """Cria o banco de dados 'dispensa' e a tabela 'produtos' se ainda não existirem."""
+    """Cria a tabela 'produtos' no banco 'dispensa' se ainda não existir."""
     try:
         connection = mysql.connector.connect(
             host="localhost",
-            user="root",
-            password=""
+            port=3307,
+            user="gestor",
+            password="gestor123",
+            database="dispensa"
         )
         cursor = connection.cursor()
-        cursor.execute("CREATE DATABASE IF NOT EXISTS dispensa")
-        connection.database = "dispensa"
 
         create_table_query = """
         CREATE TABLE IF NOT EXISTS produtos (
@@ -192,10 +196,10 @@ def create_database_if_not_exists():
         """
         cursor.execute(create_table_query)
         connection.commit()
-        logging.info("✅ Banco de dados e tabela criados.")
-        return {"status": True, "mensagem": "Banco de dados criado com sucesso."}
+        logging.info("✅ Tabela criada ou já existente.")
+        return {"status": True, "mensagem": "Tabela verificada/criada com sucesso."}
     except Error as err:
-        logging.error(f"Erro ao criar banco de dados: {err}")
+        logging.error(f"Erro ao criar tabela: {err}")
         return {"status": False, "mensagem": f"Erro: {err}"}
     finally:
         if cursor:

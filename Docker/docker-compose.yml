@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mariadb_gestor:
+    image: mariadb:10.11
+    container_name: mariadb_gestor
+    restart: always
+    env_file: .env
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_gestor_data:/var/lib/mysql
+    networks:
+      - gestor_net
+
+volumes:
+  mariadb_gestor_data:
+
+networks:
+  gestor_net:
