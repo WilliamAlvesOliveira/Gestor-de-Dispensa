@@ -1,17 +1,20 @@
 import logging
 import mysql.connector
 from mysql.connector import Error
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def connect_db():
     """Cria e retorna uma conexão com o banco de dados."""
     try:
         return mysql.connector.connect(
-            host="localhost",
-            port=3307,
-            user="gestor",
-            password='gestor123',
-            database="dispensa"
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT")),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
         )
     except Error as err:
         logging.error(f"❌ Erro ao conectar ao banco de dados: {err}")
@@ -173,14 +176,51 @@ from mysql.connector import Error
 import logging
 
 def create_database_if_not_exists():
+    connection = None
+    cursor = None
+
+    try:
+        connection = mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT")),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
+        )
+        cursor = connection.cursor()
+
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS produtos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(255) NOT NULL UNIQUE,
+            quantidade INT NOT NULL,
+            target INT NOT NULL,
+            essencial BOOLEAN DEFAULT FALSE,
+            periodo_de_compra VARCHAR(20)
+        )
+        """
+        cursor.execute(create_table_query)
+        connection.commit()
+        logging.info("✅ Tabela criada ou já existente.")
+        return {"status": True}
+
+    except Error as err:
+        logging.error(f"Erro ao criar tabela: {err}")
+        return {"status": False, "mensagem": str(err)}
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
     """Cria a tabela 'produtos' no banco 'dispensa' se ainda não existir."""
     try:
         connection = mysql.connector.connect(
-            host="localhost",
-            port=3307,
-            user="gestor",
-            password="gestor123",
-            database="dispensa"
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT")),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
         )
         cursor = connection.cursor()
 

@@ -1,15 +1,5 @@
-# Ignorar arquivos Python compilados
+.env
+venv/
 __pycache__/
 *.pyc
-
-# Ignorar banco local
 *.db
-
-# Ignorar arquivos de ambiente
-.env
-
-# Ignorar pasta de dependências
-venv/
-
-# Ignorar logs
-*.log
